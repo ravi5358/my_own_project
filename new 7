@@ -1,0 +1,1014 @@
+PS C:\Windows\system32> Install-Module -Name Az -AllowClobber -Scope CurrentUser
+
+PS C:\Windows\system32> Install-Module -Name Az -AllowClobber -Scope AllUsers
+
+PS C:\Windows\system32> $PSVersionTable.PSVersion
+
+Major  Minor  Build  Revision
+-----  -----  -----  --------
+5      1      17763  771     
+
+
+
+PS C:\Windows\system32> # Create a subnet configuration
+$subnetConfig = New-AzVirtualNetworkSubnetConfig -Name mySubnet -AddressPrefix 192.168.1.0/24
+
+# Create a virtual network
+$vnet = New-AzVirtualNetwork -ResourceGroupName $resourceGroup -Location $location `
+  -Name MYvNET -AddressPrefix 192.168.0.0/16 -Subnet $subnetConfig
+
+# Create a public IP address and specify a DNS name
+$pip = New-AzPublicIpAddress -ResourceGroupName $resourceGroup -Location $location `
+  -Name "mypublicdns$(Get-Random)" -AllocationMethod Static -IdleTimeoutInMinutes 4
+
+# Create an inbound network security group rule for port 3389
+$nsgRuleRDP = New-AzNetworkSecurityRuleConfig -Name myNetworkSecurityGroupRuleRDP  -Protocol Tcp `
+  -Direction Inbound -Priority 1000 -SourceAddressPrefix * -SourcePortRange * -DestinationAddressPrefix * `
+  -DestinationPortRange 3389 -Access Allow
+
+# Create a network security group
+$nsg = New-AzNetworkSecurityGroup -ResourceGroupName $resourceGroup -Location $location `
+  -Name myNetworkSecurityGroup -SecurityRules $nsgRuleRDP
+
+# Create a virtual network card and associate with public IP address and NSG
+$nic = New-AzNetworkInterface -Name myNic -ResourceGroupName $resourceGroup -Location $location `
+  -SubnetId $vnet.Subnets[0].Id -PublicIpAddressId $pip.Id -NetworkSecurityGroupId $nsg.Id
+
+# Create a virtual machine configuration
+$vmConfig = New-AzVMConfig -VMName $vmName -VMSize Standard_D1 | `
+Set-AzVMOperatingSystem -Windows -ComputerName $vmName -Credential $cred | `
+Set-AzVMSourceImage -PublisherName MicrosoftWindowsServer -Offer WindowsServer -Skus 2016-Datacenter -Version latest | `
+Add-AzVMNetworkInterface -Id $nic.Id
+
+# Create a virtual machine
+New-AzVM -ResourceGroupName $resourceGroup -Location $location -VM $vmConfig
+WARNING: Breaking changes in the cmdlet 'New-AzVirtualNetworkSubnetConfig' :
+WARNING:  - Update Property Name
+
+
+WARNING: Cmdlet invocation changes :
+	Old Way : -ResourceId
+	New Way : -NatGatewayId
+WARNING:  - Update Property Name
+
+
+WARNING: Cmdlet invocation changes :
+	Old Way : -InputObject
+	New Way : -NatGateway
+WARNING: NOTE : Go to https://aka.ms/azps-changewarnings for steps to suppress this breaking change warning, and other information on 
+breaking changes in Azure PowerShell.
+New-AzVirtualNetwork : Cannot validate argument on parameter 'ResourceGroupName'. The argument is null or empty. Provide an argument 
+that is not null or empty, and then try the command again.
+At line:5 char:49
++ ... vnet = New-AzVirtualNetwork -ResourceGroupName $resourceGroup -Locati ...
++                                                    ~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidData: (:) [New-AzVirtualNetwork], ParameterBindingValidationException
+    + FullyQualifiedErrorId : ParameterArgumentValidationError,Microsoft.Azure.Commands.Network.NewAzureVirtualNetworkCommand
+ 
+New-AzPublicIpAddress : Cannot validate argument on parameter 'ResourceGroupName'. The argument is null or empty. Provide an 
+argument that is not null or empty, and then try the command again.
+At line:9 char:49
++ ... pip = New-AzPublicIpAddress -ResourceGroupName $resourceGroup -Locati ...
++                                                    ~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidData: (:) [New-AzPublicIpAddress], ParameterBindingValidationException
+    + FullyQualifiedErrorId : ParameterArgumentValidationError,Microsoft.Azure.Commands.Network.NewAzurePublicIpAddressCommand
+ 
+New-AzNetworkSecurityGroup : Cannot validate argument on parameter 'ResourceGroupName'. The argument is null or empty. Provide an 
+argument that is not null or empty, and then try the command again.
+At line:18 char:54
++ ...  New-AzNetworkSecurityGroup -ResourceGroupName $resourceGroup -Locati ...
++                                                    ~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidData: (:) [New-AzNetworkSecurityGroup], ParameterBindingValidationException
+    + FullyQualifiedErrorId : ParameterArgumentValidationError,Microsoft.Azure.Commands.Network.NewAzureNetworkSecurityGroupCommand
+ 
+Cannot index into a null array.
+At line:22 char:1
++ $nic = New-AzNetworkInterface -Name myNic -ResourceGroupName $resourc ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+ 
+New-AzVMConfig : Cannot validate argument on parameter 'VMName'. The argument is null or empty. Provide an argument that is not null 
+or empty, and then try the command again.
+At line:26 char:36
++ $vmConfig = New-AzVMConfig -VMName $vmName -VMSize Standard_D1 | `
++                                    ~~~~~~~
+    + CategoryInfo          : InvalidData: (:) [New-AzVMConfig], ParameterBindingValidationException
+    + FullyQualifiedErrorId : ParameterArgumentValidationError,Microsoft.Azure.Commands.Compute.NewAzureVMConfigCommand
+ 
+New-AzVM : Cannot validate argument on parameter 'ResourceGroupName'. The argument is null or empty. Provide an argument that is not 
+null or empty, and then try the command again.
+At line:32 char:29
++ New-AzVM -ResourceGroupName $resourceGroup -Location $location -VM $v ...
++                             ~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidData: (:) [New-AzVM], ParameterBindingValidationException
+    + FullyQualifiedErrorId : ParameterArgumentValidationError,Microsoft.Azure.Commands.Compute.NewAzureVMCommand
+ 
+
+PS C:\Windows\system32> # Variables for common values
+$resourceGroup = "myResourceGroup"
+$location = "East US"
+$vmName = "myVM"
+
+# Create user object
+$cred = Get-Credential -Message "Enter a username and password for the virtual machine."
+
+# Create a resource group
+New-AzResourceGroup -Name $resourceGroup -Location $location
+
+# Create a subnet configuration
+$subnetConfig = New-AzVirtualNetworkSubnetConfig -Name mySubnet -AddressPrefix 192.168.1.0/24
+
+# Create a virtual network
+$vnet = New-AzVirtualNetwork -ResourceGroupName $resourceGroup -Location $location `
+  -Name MYvNET -AddressPrefix 192.168.0.0/16 -Subnet $subnetConfig
+
+# Create a public IP address and specify a DNS name
+$pip = New-AzPublicIpAddress -ResourceGroupName $resourceGroup -Location $location `
+  -Name "mypublicdns$(Get-Random)" -AllocationMethod Static -IdleTimeoutInMinutes 4
+
+# Create an inbound network security group rule for port 3389
+$nsgRuleRDP = New-AzNetworkSecurityRuleConfig -Name myNetworkSecurityGroupRuleRDP  -Protocol Tcp `
+  -Direction Inbound -Priority 1000 -SourceAddressPrefix * -SourcePortRange * -DestinationAddressPrefix * `
+  -DestinationPortRange 3389 -Access Allow
+
+# Create a network security group
+$nsg = New-AzNetworkSecurityGroup -ResourceGroupName $resourceGroup -Location $location `
+  -Name myNetworkSecurityGroup -SecurityRules $nsgRuleRDP
+
+# Create a virtual network card and associate with public IP address and NSG
+$nic = New-AzNetworkInterface -Name myNic -ResourceGroupName $resourceGroup -Location $location `
+  -SubnetId $vnet.Subnets[0].Id -PublicIpAddressId $pip.Id -NetworkSecurityGroupId $nsg.Id
+
+# Create a virtual machine configuration
+$vmConfig = New-AzVMConfig -VMName $vmName -VMSize Standard_D1 | `
+Set-AzVMOperatingSystem -Windows -ComputerName $vmName -Credential $cred | `
+Set-AzVMSourceImage -PublisherName MicrosoftWindowsServer -Offer WindowsServer -Skus 2016-Datacenter -Version latest | `
+Add-AzVMNetworkInterface -Id $nic.Id
+
+# Create a virtual machine
+New-AzVM -ResourceGroupName $resourceGroup -Location $location -VM $vmConfig
+New-AzResourceGroup : Run Connect-AzAccount to login.
+At line:10 char:1
++ New-AzResourceGroup -Name $resourceGroup -Location $location
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : CloseError: (:) [New-AzResourceGroup], PSInvalidOperationException
+    + FullyQualifiedErrorId : Microsoft.Azure.Commands.ResourceManager.Cmdlets.Implementation.NewAzureResourceGroupCmdlet
+ 
+WARNING: Breaking changes in the cmdlet 'New-AzVirtualNetworkSubnetConfig' :
+WARNING:  - Update Property Name
+
+
+WARNING: Cmdlet invocation changes :
+	Old Way : -ResourceId
+	New Way : -NatGatewayId
+WARNING:  - Update Property Name
+
+
+WARNING: Cmdlet invocation changes :
+	Old Way : -InputObject
+	New Way : -NatGateway
+WARNING: NOTE : Go to https://aka.ms/azps-changewarnings for steps to suppress this breaking change warning, and other information on 
+breaking changes in Azure PowerShell.
+New-AzVirtualNetwork : No subscription found in the context.  Please ensure that the credentials you provided are authorized to 
+access an Azure subscription, then run Connect-AzAccount to login.
+At line:16 char:9
++ $vnet = New-AzVirtualNetwork -ResourceGroupName $resourceGroup -Locat ...
++         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : CloseError: (:) [New-AzVirtualNetwork], ApplicationException
+    + FullyQualifiedErrorId : Microsoft.Azure.Commands.Network.NewAzureVirtualNetworkCommand
+ 
+New-AzPublicIpAddress : No subscription found in the context.  Please ensure that the credentials you provided are authorized to 
+access an Azure subscription, then run Connect-AzAccount to login.
+At line:20 char:8
++ $pip = New-AzPublicIpAddress -ResourceGroupName $resourceGroup -Locat ...
++        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : CloseError: (:) [New-AzPublicIpAddress], ApplicationException
+    + FullyQualifiedErrorId : Microsoft.Azure.Commands.Network.NewAzurePublicIpAddressCommand
+ 
+New-AzNetworkSecurityGroup : No subscription found in the context.  Please ensure that the credentials you provided are authorized 
+to access an Azure subscription, then run Connect-AzAccount to login.
+At line:29 char:8
++ $nsg = New-AzNetworkSecurityGroup -ResourceGroupName $resourceGroup - ...
++        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : CloseError: (:) [New-AzNetworkSecurityGroup], ApplicationException
+    + FullyQualifiedErrorId : Microsoft.Azure.Commands.Network.NewAzureNetworkSecurityGroupCommand
+ 
+Cannot index into a null array.
+At line:33 char:1
++ $nic = New-AzNetworkInterface -Name myNic -ResourceGroupName $resourc ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [], RuntimeException
+    + FullyQualifiedErrorId : NullArray
+ 
+Add-AzVMNetworkInterface : Cannot validate argument on parameter 'Id'. The argument is null or empty. Provide an argument that is 
+not null or empty, and then try the command again.
+At line:40 char:30
++ Add-AzVMNetworkInterface -Id $nic.Id
++                              ~~~~~~~
+    + CategoryInfo          : InvalidData: (:) [Add-AzVMNetworkInterface], ParameterBindingValidationException
+    + FullyQualifiedErrorId : ParameterArgumentValidationError,Microsoft.Azure.Commands.Compute.AddAzureVMNetworkInterfaceCommand
+ 
+New-AzVM : Cannot validate argument on parameter 'VM'. The argument is null or empty. Provide an argument that is not null or empty, 
+and then try the command again.
+At line:43 char:68
++ ... M -ResourceGroupName $resourceGroup -Location $location -VM $vmConfig
++                                                                 ~~~~~~~~~
+    + CategoryInfo          : InvalidData: (:) [New-AzVM], ParameterBindingValidationException
+    + FullyQualifiedErrorId : ParameterArgumentValidationError,Microsoft.Azure.Commands.Compute.NewAzureVMCommand
+ 
+
+PS C:\Windows\system32> New-AzVm `
+    -ResourceGroupName "myResourceGroupVM" `
+    -Name "myVM" `
+    -Location "EastUS" `
+    -VirtualNetworkName "myVnet" `
+    -SubnetName "mySubnet" `
+    -SecurityGroupName "myNetworkSecurityGroup" `
+    -PublicIpAddressName "myPublicIpAddress" `
+    -Credential $cred
+New-AzVm : No subscription found in the context.  Please ensure that the credentials you provided are authorized to access an Azure 
+subscription, then run Connect-AzAccount to login.
+At line:1 char:1
++ New-AzVm `
++ ~~~~~~~~~~
+    + CategoryInfo          : CloseError: (:) [New-AzVM], ApplicationException
+    + FullyQualifiedErrorId : Microsoft.Azure.Commands.Compute.NewAzureVMCommand
+ 
+
+PS C:\Windows\system32> Connect-AzAccount
+
+Account                               SubscriptionName TenantId                             Environment
+-------                               ---------------- --------                             -----------
+ravishankar.mosam@sonata-software.com Kishor N M – MPN 7571a489-bd29-4f38-b9a6-7c880f8cddf0 AzureCloud 
+
+
+
+PS C:\Windows\system32> New-AzVm `
+    -ResourceGroupName "myResourceGroupVM" `
+    -Name "myVM" `
+    -Location "EastUS" `
+    -VirtualNetworkName "myVnet" `
+    -SubnetName "mySubnet" `
+    -SecurityGroupName "myNetworkSecurityGroup" `
+    -PublicIpAddressName "myPublicIpAddress" `
+    -Credential $cred
+New-AzVm : Windows admin user name cannot be more than 20 characters long, be empty, end with a period(.), or contain the following 
+characters: \ / " [ ] : | < > + = ; , ? * @.
+At line:1 char:1
++ New-AzVm `
++ ~~~~~~~~~~
+    + CategoryInfo          : CloseError: (:) [New-AzVM], CloudException
+    + FullyQualifiedErrorId : Microsoft.Azure.Commands.Compute.NewAzureVMCommand
+ 
+
+PS C:\Windows\system32> # Variables for common values
+$resourceGroup = "myResourceGroup"
+$location = "East US"
+$vmName = "myVM"
+
+# Create user object
+$cred = Get-Credential -Message "Enter a username and password for the virtual machine."
+
+# Create a resource group
+New-AzResourceGroup -Name $resourceGroup -Location $location
+
+# Create a subnet configuration
+$subnetConfig = New-AzVirtualNetworkSubnetConfig -Name mySubnet -AddressPrefix 192.168.1.0/24
+
+# Create a virtual network
+$vnet = New-AzVirtualNetwork -ResourceGroupName $resourceGroup -Location $location `
+  -Name MYvNET -AddressPrefix 192.168.0.0/16 -Subnet $subnetConfig
+
+# Create a public IP address and specify a DNS name
+$pip = New-AzPublicIpAddress -ResourceGroupName $resourceGroup -Location $location `
+  -Name "mypublicdns$(Get-Random)" -AllocationMethod Static -IdleTimeoutInMinutes 4
+
+# Create an inbound network security group rule for port 3389
+$nsgRuleRDP = New-AzNetworkSecurityRuleConfig -Name myNetworkSecurityGroupRuleRDP  -Protocol Tcp `
+  -Direction Inbound -Priority 1000 -SourceAddressPrefix * -SourcePortRange * -DestinationAddressPrefix * `
+  -DestinationPortRange 3389 -Access Allow
+
+# Create a network security group
+$nsg = New-AzNetworkSecurityGroup -ResourceGroupName $resourceGroup -Location $location `
+  -Name myNetworkSecurityGroup -SecurityRules $nsgRuleRDP
+
+# Create a virtual network card and associate with public IP address and NSG
+$nic = New-AzNetworkInterface -Name myNic -ResourceGroupName $resourceGroup -Location $location `
+  -SubnetId $vnet.Subnets[0].Id -PublicIpAddressId $pip.Id -NetworkSecurityGroupId $nsg.Id
+
+# Create a virtual machine configuration
+$vmConfig = New-AzVMConfig -VMName $vmName -VMSize Standard_D1 | `
+Set-AzVMOperatingSystem -Windows -ComputerName $vmName -Credential $cred | `
+Set-AzVMSourceImage -PublisherName MicrosoftWindowsServer -Offer WindowsServer -Skus 2016-Datacenter -Version latest | `
+Add-AzVMNetworkInterface -Id $nic.Id
+
+# Create a virtual machine
+New-AzVM -ResourceGroupName $resourceGroup -Location $location -VM $vmConfig
+
+
+ResourceGroupName : myResourceGroup
+Location          : eastus
+ProvisioningState : Succeeded
+Tags              : 
+ResourceId        : /subscriptions/5b0df146-f3db-425e-b4e3-100c365ef724/resourceGroups/myResourceGroup
+
+WARNING: Breaking changes in the cmdlet 'New-AzVirtualNetworkSubnetConfig' :
+WARNING:  - Update Property Name
+
+
+WARNING: Cmdlet invocation changes :
+	Old Way : -ResourceId
+	New Way : -NatGatewayId
+WARNING:  - Update Property Name
+
+
+WARNING: Cmdlet invocation changes :
+	Old Way : -InputObject
+	New Way : -NatGateway
+WARNING: NOTE : Go to https://aka.ms/azps-changewarnings for steps to suppress this breaking change warning, and other information on 
+breaking changes in Azure PowerShell.
+WARNING: Since the VM is created using premium storage or managed disk, existing standard storage account, ravisampletestedresource, i
+s used for boot diagnostics.
+New-AzVM : Windows admin user name cannot be more than 20 characters long, be empty, end with a period(.), or contain the following 
+characters: \ / " [ ] : | < > + = ; , ? * @.
+ErrorCode: InvalidParameter
+ErrorMessage: Windows admin user name cannot be more than 20 characters long, be empty, end with a period(.), or contain the 
+following characters: \ / " [ ] : | < > + = ; , ? * @.
+ErrorTarget: adminUsername
+StatusCode: 400
+ReasonPhrase: Bad Request
+OperationID : af972af4-255f-4b59-9c06-48511fdc5858
+At line:43 char:1
++ New-AzVM -ResourceGroupName $resourceGroup -Location $location -VM $v ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : CloseError: (:) [New-AzVM], ComputeCloudException
+    + FullyQualifiedErrorId : Microsoft.Azure.Commands.Compute.NewAzureVMCommand
+ 
+
+
+
+PS C:\Windows\system32> $cred = Get-Credential
+cmdlet Get-Credential at command pipeline position 1
+Supply values for the following parameters:
+
+PS C:\Windows\system32> cred = Get-Credential
+cred : The term 'cred' is not recognized as the name of a cmdlet, function, script file, or operable program. Check the spelling of 
+the name, or if a path was included, verify that the path is correct and try again.
+At line:1 char:1
++ cred = Get-Credential
++ ~~~~
+    + CategoryInfo          : ObjectNotFound: (cred:String) [], CommandNotFoundException
+    + FullyQualifiedErrorId : CommandNotFoundException
+ 
+
+PS C:\Windows\system32> $cred = Get-Credential
+cmdlet Get-Credential at command pipeline position 1
+Supply values for the following parameters:
+
+PS C:\Windows\system32> New-AzVm `
+    -ResourceGroupName "myResourceGroupVM" `
+    -Name "myVM" `
+    -Location "EastUS" `
+    -VirtualNetworkName "myVnet" `
+    -SubnetName "mySubnet" `
+    -SecurityGroupName "myNetworkSecurityGroup" `
+    -PublicIpAddressName "myPublicIpAddress" `
+    -Credential $cred
+New-AzVm : Windows admin user name cannot be more than 20 characters long, be empty, end with a period(.), or contain the following 
+characters: \ / " [ ] : | < > + = ; , ? * @.
+At line:1 char:1
++ New-AzVm `
++ ~~~~~~~~~~
+    + CategoryInfo          : CloseError: (:) [New-AzVM], CloudException
+    + FullyQualifiedErrorId : Microsoft.Azure.Commands.Compute.NewAzureVMCommand
+ 
+
+PS C:\Windows\system32> az vm create --resource-group MyResourceGroup --name MyVM --image UbuntuLTS --admin-username USER_NAME --generate-ssh-keys
+az : The term 'az' is not recognized as the name of a cmdlet, function, script file, or operable program. Check the spelling of the 
+name, or if a path was included, verify that the path is correct and try again.
+At line:1 char:1
++ az vm create --resource-group MyResourceGroup --name MyVM --image Ubu ...
++ ~~
+    + CategoryInfo          : ObjectNotFound: (az:String) [], CommandNotFoundException
+    + FullyQualifiedErrorId : CommandNotFoundException
+ 
+
+PS C:\Windows\system32> az vm create --resource-group MyResourceGroup --name MyVM --image Windows --admin-username USER_NAME --generate-ssh-keys
+az : The term 'az' is not recognized as the name of a cmdlet, function, script file, or operable program. Check the spelling of the 
+name, or if a path was included, verify that the path is correct and try again.
+At line:1 char:1
++ az vm create --resource-group MyResourceGroup --name MyVM --image Win ...
++ ~~
+    + CategoryInfo          : ObjectNotFound: (az:String) [], CommandNotFoundException
+    + FullyQualifiedErrorId : CommandNotFoundException
+ 
+
+PS C:\Windows\system32> # Define a credential object to store the username and password for the VM
+$UserName='demouser'
+$Password='Password@123'| ConvertTo-SecureString -Force -AsPlainText
+$Credential=New-Object PSCredential($UserName,$Password)
+
+# Create the VM configuration object
+$VmName = "VirtualMachinelatest"
+$VmSize = "Standard_A1"
+$VirtualMachine = New-AzureRmVMConfig `
+  -VMName $VmName `
+  -VMSize $VmSize
+
+$VirtualMachine = Set-AzureRmVMOperatingSystem `
+  -VM $VirtualMachine `
+  -Windows `
+  -ComputerName "MainComputer" `
+  -Credential $Credential
+
+$VirtualMachine = Set-AzureRmVMSourceImage `
+  -VM $VirtualMachine `
+  -PublisherName "MicrosoftWindowsServer" `
+  -Offer "WindowsServer" `
+  -Skus "2016-Datacenter" `
+  -Version "latest"
+
+# Sets the operating system disk properties on a VM.
+$VirtualMachine = Set-AzureRmVMOSDisk `
+  -VM $VirtualMachine `
+  -CreateOption FromImage | `
+  Set-AzureRmVMBootDiagnostics -ResourceGroupName $ResourceGroupName `
+  -StorageAccountName $StorageAccountName -Enable |`
+  Add-AzureRmVMNetworkInterface -Id $nic.Id
+
+
+# Create the VM.
+New-AzureRmVM `
+  -ResourceGroupName $ResourceGroupName `
+  -Location $location `
+  -VM $VirtualMachine
+New-AzureRmVMConfig : The term 'New-AzureRmVMConfig' is not recognized as the name of a cmdlet, function, script file, or operable 
+program. Check the spelling of the name, or if a path was included, verify that the path is correct and try again.
+At line:9 char:19
++ $VirtualMachine = New-AzureRmVMConfig `
++                   ~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : ObjectNotFound: (New-AzureRmVMConfig:String) [], CommandNotFoundException
+    + FullyQualifiedErrorId : CommandNotFoundException
+ 
+Set-AzureRmVMOperatingSystem : The term 'Set-AzureRmVMOperatingSystem' is not recognized as the name of a cmdlet, function, script 
+file, or operable program. Check the spelling of the name, or if a path was included, verify that the path is correct and try again.
+At line:13 char:19
++ $VirtualMachine = Set-AzureRmVMOperatingSystem `
++                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : ObjectNotFound: (Set-AzureRmVMOperatingSystem:String) [], CommandNotFoundException
+    + FullyQualifiedErrorId : CommandNotFoundException
+ 
+Set-AzureRmVMSourceImage : The term 'Set-AzureRmVMSourceImage' is not recognized as the name of a cmdlet, function, script file, or 
+operable program. Check the spelling of the name, or if a path was included, verify that the path is correct and try again.
+At line:19 char:19
++ $VirtualMachine = Set-AzureRmVMSourceImage `
++                   ~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : ObjectNotFound: (Set-AzureRmVMSourceImage:String) [], CommandNotFoundException
+    + FullyQualifiedErrorId : CommandNotFoundException
+ 
+Set-AzureRmVMOSDisk : The term 'Set-AzureRmVMOSDisk' is not recognized as the name of a cmdlet, function, script file, or operable 
+program. Check the spelling of the name, or if a path was included, verify that the path is correct and try again.
+At line:27 char:19
++ $VirtualMachine = Set-AzureRmVMOSDisk `
++                   ~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : ObjectNotFound: (Set-AzureRmVMOSDisk:String) [], CommandNotFoundException
+    + FullyQualifiedErrorId : CommandNotFoundException
+ 
+New-AzureRmVM : The term 'New-AzureRmVM' is not recognized as the name of a cmdlet, function, script file, or operable program. 
+Check the spelling of the name, or if a path was included, verify that the path is correct and try again.
+At line:36 char:1
++ New-AzureRmVM `
++ ~~~~~~~~~~~~~
+    + CategoryInfo          : ObjectNotFound: (New-AzureRmVM:String) [], CommandNotFoundException
+    + FullyQualifiedErrorId : CommandNotFoundException
+ 
+
+PS C:\Windows\system32> New-AzVm `
+    -ResourceGroupName "myResourceGroup" `
+    -Name "myVM" `
+    -Location "East US" `
+    -VirtualNetworkName "myVnet" `
+    -SubnetName "mySubnet" `
+    -SecurityGroupName "myNetworkSecurityGroup" `
+    -PublicIpAddressName "myPublicIpAddress" `
+    -OpenPorts 80,3389
+cmdlet New-AzVM at command pipeline position 1
+Supply values for the following parameters:
+New-AzVm : Windows admin user name cannot be more than 20 characters long, be empty, end with a period(.), or contain the following 
+characters: \ / " [ ] : | < > + = ; , ? * @.
+At line:1 char:1
++ New-AzVm `
++ ~~~~~~~~~~
+    + CategoryInfo          : CloseError: (:) [New-AzVM], CloudException
+    + FullyQualifiedErrorId : Microsoft.Azure.Commands.Compute.NewAzureVMCommand
+ 
+
+PS C:\Windows\system32> get-azsubscription
+
+Name                       Id                                   TenantId                             State   
+----                       --                                   --------                             -----   
+Abhay Sinha – MPN          5dc670ad-0bd6-45f9-a539-a0e6e9ab518a 7571a489-bd29-4f38-b9a6-7c880f8cddf0 Disabled
+Kishor N M – MPN           5b0df146-f3db-425e-b4e3-100c365ef724 7571a489-bd29-4f38-b9a6-7c880f8cddf0 Enabled 
+Microsoft Azure Enterprise 374e4407-53bb-45d3-8945-fb3665cd3214 eaaa5c8a-ab47-490a-b568-be6e85619305 Enabled 
+Himalaya-CMS               2c5d49d5-f56a-4aee-bf41-edbd942c5719 eaaa5c8a-ab47-490a-b568-be6e85619305 Enabled 
+Himalaya-BC                988d7318-d095-4363-9d2d-c9963961c4c7 eaaa5c8a-ab47-490a-b568-be6e85619305 Enabled 
+
+
+
+PS C:\Windows\system32> New-AzVm `
+    -ResourceGroupName "myResourceGroup" `
+    -Name "myVM" `
+    -Location "East US" `
+    -VirtualNetworkName "myVnet" `
+    -SubnetName "mySubnet" `
+    -SecurityGroupName "myNetworkSecurityGroup" `
+    -PublicIpAddressName "myPublicIpAddress" `
+    -OpenPorts 80,3389
+cmdlet New-AzVM at command pipeline position 1
+Supply values for the following parameters:
+
+
+ResourceGroupName        : myResourceGroup
+Id                       : 
+/subscriptions/5b0df146-f3db-425e-b4e3-100c365ef724/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachines/myVM
+VmId                     : c69fd6fb-7d73-4f0e-8c13-93dfd82daf1b
+Name                     : myVM
+Type                     : Microsoft.Compute/virtualMachines
+Location                 : eastus
+Tags                     : {}
+HardwareProfile          : {VmSize}
+NetworkProfile           : {NetworkInterfaces}
+OSProfile                : {ComputerName, AdminUsername, WindowsConfiguration, Secrets, AllowExtensionOperations, 
+RequireGuestProvisionSignal}
+ProvisioningState        : Succeeded
+StorageProfile           : {ImageReference, OsDisk, DataDisks}
+FullyQualifiedDomainName : myvm-407ebf.East US.cloudapp.azure.com
+
+
+
+
+PS C:\Windows\system32> stop azvm -name myVM
+stop : The term 'stop' is not recognized as the name of a cmdlet, function, script file, or operable program. Check the spelling of 
+the name, or if a path was included, verify that the path is correct and try again.
+At line:1 char:1
++ stop azvm -name myVM
++ ~~~~
+    + CategoryInfo          : ObjectNotFound: (stop:String) [], CommandNotFoundException
+    + FullyQualifiedErrorId : CommandNotFoundException
+ 
+
+PS C:\Windows\system32> Stop-AzVM -name myVM
+cmdlet Stop-AzVM at command pipeline position 1
+Supply values for the following parameters:
+(Type !? for Help.)
+ResourceGroupName: myResourceGroup
+
+
+OperationId : a0922a8f-9ee9-4022-9879-acfe76db1de0
+Status      : Succeeded
+StartTime   : 27-11-2019 18:10:01
+EndTime     : 27-11-2019 18:10:50
+Error       : 
+
+
+
+
+PS C:\Windows\system32> # Variables for common values
+$resourceGroup = "myResourceGroup"
+$location = "East US"
+$vmName = "myVM"
+
+# Create user object
+$cred = Get-Credential -Message "Enter a username and password for the virtual machine."
+
+# Create a resource group
+New-AzResourceGroup -Name $resourceGroup -Location $location
+
+# Create a subnet configuration
+$subnetConfig = New-AzVirtualNetworkSubnetConfig -Name mySubnet -AddressPrefix 192.168.1.0/24
+
+# Create a virtual network
+$vnet = New-AzVirtualNetwork -ResourceGroupName $resourceGroup -Location $location `
+  -Name MYvNET -AddressPrefix 192.168.0.0/16 -Subnet $subnetConfig
+
+# Create a public IP address and specify a DNS name
+$pip = New-AzPublicIpAddress -ResourceGroupName $resourceGroup -Location $location `
+  -Name "mypublicdns$(Get-Random)" -AllocationMethod Static -IdleTimeoutInMinutes 4
+
+# Create an inbound network security group rule for port 3389
+$nsgRuleRDP = New-AzNetworkSecurityRuleConfig -Name myNetworkSecurityGroupRuleRDP  -Protocol Tcp `
+  -Direction Inbound -Priority 1000 -SourceAddressPrefix * -SourcePortRange * -DestinationAddressPrefix * `
+  -DestinationPortRange 3389 -Access Allow
+
+# Create a network security group
+$nsg = New-AzNetworkSecurityGroup -ResourceGroupName $resourceGroup -Location $location `
+  -Name myNetworkSecurityGroup -SecurityRules $nsgRuleRDP
+
+# Create a virtual network card and associate with public IP address and NSG
+$nic = New-AzNetworkInterface -Name myNic -ResourceGroupName $resourceGroup -Location $location `
+  -SubnetId $vnet.Subnets[0].Id -PublicIpAddressId $pip.Id -NetworkSecurityGroupId $nsg.Id
+
+# Create a virtual machine configuration
+$vmConfig = New-AzVMConfig -VMName $vmName -VMSize Standard_D1 | `
+Set-AzVMOperatingSystem -Windows -ComputerName $vmName -Credential $cred | `
+Set-AzVMSourceImage -PublisherName MicrosoftWindowsServer -Offer WindowsServer -Skus 2016-Datacenter -Version latest | `
+Add-AzVMNetworkInterface -Id $nic.Id
+
+# Create a virtual machine
+New-AzVM -ResourceGroupName $resourceGroup -Location $location -VM $vmConfig
+
+
+ResourceGroupName : myResourceGroup
+Location          : eastus
+ProvisioningState : Succeeded
+Tags              : 
+ResourceId        : /subscriptions/5b0df146-f3db-425e-b4e3-100c365ef724/resourceGroups/myResourceGroup
+
+WARNING: Breaking changes in the cmdlet 'New-AzVirtualNetworkSubnetConfig' :
+WARNING:  - Update Property Name
+
+
+WARNING: Cmdlet invocation changes :
+	Old Way : -ResourceId
+	New Way : -NatGatewayId
+WARNING:  - Update Property Name
+
+
+WARNING: Cmdlet invocation changes :
+	Old Way : -InputObject
+	New Way : -NatGateway
+WARNING: NOTE : Go to https://aka.ms/azps-changewarnings for steps to suppress this breaking change warning, and other information on 
+breaking changes in Azure PowerShell.
+WARNING: Since the VM is created using premium storage or managed disk, existing standard storage account, ravisampletestedresource, i
+s used for boot diagnostics.
+New-AzVM : Requested operation cannot be performed because the VM size Standard_D1 does not support the storage account type 
+Premium_LRS of disk 'myVM_OsDisk_1_49a74ac3822d4cec814fe15853d67535'. Consider updating the VM to a size that supports Premium 
+storage.
+ErrorCode: InvalidParameter
+ErrorMessage: Requested operation cannot be performed because the VM size Standard_D1 does not support the storage account type 
+Premium_LRS of disk 'myVM_OsDisk_1_49a74ac3822d4cec814fe15853d67535'. Consider updating the VM to a size that supports Premium 
+storage.
+ErrorTarget: vmSize
+StatusCode: 400
+ReasonPhrase: Bad Request
+OperationID : ec4785bb-2846-4f89-9ff7-5b27e4cca400
+At line:43 char:1
++ New-AzVM -ResourceGroupName $resourceGroup -Location $location -VM $v ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : CloseError: (:) [New-AzVM], ComputeCloudException
+    + FullyQualifiedErrorId : Microsoft.Azure.Commands.Compute.NewAzureVMCommand
+ 
+
+
+
+PS C:\Windows\system32> # Variables for common values
+$resourceGroup = "myResourceGroup"
+$location = "East US"
+$vmName = "my_VM2"
+
+# Create user object
+$cred = Get-Credential -Message "Enter a username and password for the virtual machine."
+
+# Create a resource group
+New-AzResourceGroup -Name $resourceGroup -Location $location
+
+# Create a subnet configuration
+$subnetConfig = New-AzVirtualNetworkSubnetConfig -Name mySubnet -AddressPrefix 192.168.1.0/24
+
+# Create a virtual network
+$vnet = New-AzVirtualNetwork -ResourceGroupName $resourceGroup -Location $location `
+  -Name MYvNET -AddressPrefix 192.168.0.0/16 -Subnet $subnetConfig
+
+# Create a public IP address and specify a DNS name
+$pip = New-AzPublicIpAddress -ResourceGroupName $resourceGroup -Location $location `
+  -Name "mypublicdns$(Get-Random)" -AllocationMethod Static -IdleTimeoutInMinutes 4
+
+# Create an inbound network security group rule for port 3389
+$nsgRuleRDP = New-AzNetworkSecurityRuleConfig -Name myNetworkSecurityGroupRuleRDP  -Protocol Tcp `
+  -Direction Inbound -Priority 1000 -SourceAddressPrefix * -SourcePortRange * -DestinationAddressPrefix * `
+  -DestinationPortRange 3389 -Access Allow
+
+# Create a network security group
+$nsg = New-AzNetworkSecurityGroup -ResourceGroupName $resourceGroup -Location $location `
+  -Name myNetworkSecurityGroup -SecurityRules $nsgRuleRDP
+
+# Create a virtual network card and associate with public IP address and NSG
+$nic = New-AzNetworkInterface -Name myNic -ResourceGroupName $resourceGroup -Location $location `
+  -SubnetId $vnet.Subnets[0].Id -PublicIpAddressId $pip.Id -NetworkSecurityGroupId $nsg.Id
+
+# Create a virtual machine configuration
+$vmConfig = New-AzVMConfig -VMName $vmName -VMSize Standard DS1_v2 | `
+Set-AzVMOperatingSystem -Windows -ComputerName $vmName -Credential $cred | `
+Set-AzVMSourceImage -PublisherName MicrosoftWindowsServer -Offer WindowsServer -Skus 2016-Datacenter -Version latest | `
+Add-AzVMNetworkInterface -Id $nic.Id
+
+# Create a virtual machine
+New-AzVM -ResourceGroupName $resourceGroup -Location $location -VM $vmConfig
+
+
+ResourceGroupName : myResourceGroup
+Location          : eastus
+ProvisioningState : Succeeded
+Tags              : 
+ResourceId        : /subscriptions/5b0df146-f3db-425e-b4e3-100c365ef724/resourceGroups/myResourceGroup
+
+WARNING: Breaking changes in the cmdlet 'New-AzVirtualNetworkSubnetConfig' :
+WARNING:  - Update Property Name
+
+
+WARNING: Cmdlet invocation changes :
+	Old Way : -ResourceId
+	New Way : -NatGatewayId
+WARNING:  - Update Property Name
+
+
+WARNING: Cmdlet invocation changes :
+	Old Way : -InputObject
+	New Way : -NatGateway
+WARNING: NOTE : Go to https://aka.ms/azps-changewarnings for steps to suppress this breaking change warning, and other information on 
+breaking changes in Azure PowerShell.
+WARNING: Since the VM is created using premium storage or managed disk, existing standard storage account, ravisampletestedresource, i
+s used for boot diagnostics.
+New-AzVM : Id DS1_v2 is not a valid resource reference.
+ErrorCode: BadRequest
+ErrorMessage: Id DS1_v2 is not a valid resource reference.
+ErrorTarget: 
+StatusCode: 400
+ReasonPhrase: Bad Request
+OperationID : c8a69aa9-7fb8-4330-a86c-2f6bd79e62f9
+At line:43 char:1
++ New-AzVM -ResourceGroupName $resourceGroup -Location $location -VM $v ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : CloseError: (:) [New-AzVM], ComputeCloudException
+    + FullyQualifiedErrorId : Microsoft.Azure.Commands.Compute.NewAzureVMCommand
+ 
+
+
+
+PS C:\Windows\system32> # Variables for common values
+$resourceGroup = "myResourceGroup"
+$location = "East US"
+$vmName = "my_VM2"
+
+# Create user object
+$cred = Get-Credential -Message "Enter a username and password for the virtual machine."
+
+# Create a resource group
+New-AzResourceGroup -Name $resourceGroup -Location $location
+
+# Create a subnet configuration
+$subnetConfig = New-AzVirtualNetworkSubnetConfig -Name mySubnet -AddressPrefix 192.168.1.0/24
+
+# Create a virtual network
+$vnet = New-AzVirtualNetwork -ResourceGroupName $resourceGroup -Location $location `
+  -Name MYvNET -AddressPrefix 192.168.0.0/16 -Subnet $subnetConfig
+
+# Create a public IP address and specify a DNS name
+$pip = New-AzPublicIpAddress -ResourceGroupName $resourceGroup -Location $location `
+  -Name "mypublicdns$(Get-Random)" -AllocationMethod Static -IdleTimeoutInMinutes 4
+
+# Create an inbound network security group rule for port 3389
+$nsgRuleRDP = New-AzNetworkSecurityRuleConfig -Name myNetworkSecurityGroupRuleRDP  -Protocol Tcp `
+  -Direction Inbound -Priority 1000 -SourceAddressPrefix * -SourcePortRange * -DestinationAddressPrefix * `
+  -DestinationPortRange 3389 -Access Allow
+
+# Create a network security group
+$nsg = New-AzNetworkSecurityGroup -ResourceGroupName $resourceGroup -Location $location `
+  -Name myNetworkSecurityGroup -SecurityRules $nsgRuleRDP
+
+# Create a virtual network card and associate with public IP address and NSG
+$nic = New-AzNetworkInterface -Name myNic -ResourceGroupName $resourceGroup -Location $location `
+  -SubnetId $vnet.Subnets[0].Id -PublicIpAddressId $pip.Id -NetworkSecurityGroupId $nsg.Id
+
+# Create a virtual machine configuration
+$vmConfig = New-AzVMConfig -VMName $vmName -VMSize Standard_D2s_v3 | `
+Set-AzVMOperatingSystem -Windows -ComputerName $vmName -Credential $cred | `
+Set-AzVMSourceImage -PublisherName MicrosoftWindowsServer -Offer WindowsServer -Skus 2016-Datacenter -Version latest | `
+Add-AzVMNetworkInterface -Id $nic.Id
+
+# Create a virtual machine
+New-AzVM -ResourceGroupName $resourceGroup -Location $location -VM $vmConfig
+
+
+ResourceGroupName : myResourceGroup
+Location          : eastus
+ProvisioningState : Succeeded
+Tags              : 
+ResourceId        : /subscriptions/5b0df146-f3db-425e-b4e3-100c365ef724/resourceGroups/myResourceGroup
+
+WARNING: Breaking changes in the cmdlet 'New-AzVirtualNetworkSubnetConfig' :
+WARNING:  - Update Property Name
+
+
+WARNING: Cmdlet invocation changes :
+	Old Way : -ResourceId
+	New Way : -NatGatewayId
+WARNING:  - Update Property Name
+
+
+WARNING: Cmdlet invocation changes :
+	Old Way : -InputObject
+	New Way : -NatGateway
+WARNING: NOTE : Go to https://aka.ms/azps-changewarnings for steps to suppress this breaking change warning, and other information on 
+breaking changes in Azure PowerShell.
+WARNING: Since the VM is created using premium storage or managed disk, existing standard storage account, ravisampletestedresource, i
+s used for boot diagnostics.
+New-AzVM : Windows computer name cannot be more than 15 characters long, be entirely numeric, or contain the following characters: ` 
+~ ! @ # $ % ^ & * ( ) = + _ [ ] { } \ | ; : . ' " , < > / ?.
+ErrorCode: InvalidParameter
+ErrorMessage: Windows computer name cannot be more than 15 characters long, be entirely numeric, or contain the following 
+characters: ` ~ ! @ # $ % ^ & * ( ) = + _ [ ] { } \ | ; : . ' " , < > / ?.
+ErrorTarget: computerName
+StatusCode: 400
+ReasonPhrase: Bad Request
+OperationID : 493857b4-519a-4525-923e-a95e8ffcce27
+At line:43 char:1
++ New-AzVM -ResourceGroupName $resourceGroup -Location $location -VM $v ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : CloseError: (:) [New-AzVM], ComputeCloudException
+    + FullyQualifiedErrorId : Microsoft.Azure.Commands.Compute.NewAzureVMCommand
+ 
+
+
+
+PS C:\Windows\system32> # Variables for common values
+$resourceGroup = "myResourceGroup"
+$location = "East US"
+$vmName = "my_VM2"
+
+# Create user object
+$cred = Get-Credential -Message "Enter a username and password for the virtual machine."
+
+# Create a resource group
+New-AzResourceGroup -Name $resourceGroup -Location $location
+
+# Create a subnet configuration
+$subnetConfig = New-AzVirtualNetworkSubnetConfig -Name mySubnet -AddressPrefix 192.168.1.0/24
+
+# Create a virtual network
+$vnet = New-AzVirtualNetwork -ResourceGroupName $resourceGroup -Location $location `
+  -Name MYvNET -AddressPrefix 192.168.0.0/16 -Subnet $subnetConfig
+
+# Create a public IP address and specify a DNS name
+$pip = New-AzPublicIpAddress -ResourceGroupName $resourceGroup -Location $location `
+  -Name "mypublicdns$(Get-Random)" -AllocationMethod Static -IdleTimeoutInMinutes 4
+
+# Create an inbound network security group rule for port 3389
+$nsgRuleRDP = New-AzNetworkSecurityRuleConfig -Name myNetworkSecurityGroupRuleRDP  -Protocol Tcp `
+  -Direction Inbound -Priority 1000 -SourceAddressPrefix * -SourcePortRange * -DestinationAddressPrefix * `
+  -DestinationPortRange 3389 -Access Allow
+
+# Create a network security group
+$nsg = New-AzNetworkSecurityGroup -ResourceGroupName $resourceGroup -Location $location `
+  -Name myNetworkSecurityGroup -SecurityRules $nsgRuleRDP
+
+# Create a virtual network card and associate with public IP address and NSG
+$nic = New-AzNetworkInterface -Name myNic -ResourceGroupName $resourceGroup -Location $location `
+  -SubnetId $vnet.Subnets[0].Id -PublicIpAddressId $pip.Id -NetworkSecurityGroupId $nsg.Id
+
+# Create a virtual machine configuration
+$vmConfig = New-AzVMConfig -VMName $vmName -VMSize Standard_D2s_v3 | `
+Set-AzVMOperatingSystem -Windows -ComputerName $vmName -Credential $cred | `
+Set-AzVMSourceImage -PublisherName MicrosoftWindowsServer -Offer WindowsServer -Skus 2016-Datacenter -Version latest | `
+Add-AzVMNetworkInterface -Id $nic.Id
+
+# Create a virtual machine
+New-AzVM -ResourceGroupName $resourceGroup -Location $location -VM $vmConfig
+
+
+ResourceGroupName : myResourceGroup
+Location          : eastus
+ProvisioningState : Succeeded
+Tags              : 
+ResourceId        : /subscriptions/5b0df146-f3db-425e-b4e3-100c365ef724/resourceGroups/myResourceGroup
+
+WARNING: Breaking changes in the cmdlet 'New-AzVirtualNetworkSubnetConfig' :
+WARNING:  - Update Property Name
+
+
+WARNING: Cmdlet invocation changes :
+	Old Way : -ResourceId
+	New Way : -NatGatewayId
+WARNING:  - Update Property Name
+
+
+WARNING: Cmdlet invocation changes :
+	Old Way : -InputObject
+	New Way : -NatGateway
+WARNING: NOTE : Go to https://aka.ms/azps-changewarnings for steps to suppress this breaking change warning, and other information on 
+breaking changes in Azure PowerShell.
+WARNING: Since the VM is created using premium storage or managed disk, existing standard storage account, ravisampletestedresource, i
+s used for boot diagnostics.
+New-AzVM : Windows computer name cannot be more than 15 characters long, be entirely numeric, or contain the following characters: ` 
+~ ! @ # $ % ^ & * ( ) = + _ [ ] { } \ | ; : . ' " , < > / ?.
+ErrorCode: InvalidParameter
+ErrorMessage: Windows computer name cannot be more than 15 characters long, be entirely numeric, or contain the following 
+characters: ` ~ ! @ # $ % ^ & * ( ) = + _ [ ] { } \ | ; : . ' " , < > / ?.
+ErrorTarget: computerName
+StatusCode: 400
+ReasonPhrase: Bad Request
+OperationID : c65bc6e3-47d5-4d0f-bce5-073da9cde9b8
+At line:43 char:1
++ New-AzVM -ResourceGroupName $resourceGroup -Location $location -VM $v ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : CloseError: (:) [New-AzVM], ComputeCloudException
+    + FullyQualifiedErrorId : Microsoft.Azure.Commands.Compute.NewAzureVMCommand
+ 
+
+
+
+PS C:\Windows\system32> # Variables for common values
+$resourceGroup = "myResourceGroup"
+$location = "East US"
+$vmName = "myVM2"
+
+# Create user object
+$cred = Get-Credential -Message "Enter a username and password for the virtual machine."
+
+# Create a resource group
+New-AzResourceGroup -Name $resourceGroup -Location $location
+
+# Create a subnet configuration
+$subnetConfig = New-AzVirtualNetworkSubnetConfig -Name mySubnet -AddressPrefix 192.168.1.0/24
+
+# Create a virtual network
+$vnet = New-AzVirtualNetwork -ResourceGroupName $resourceGroup -Location $location `
+  -Name MYvNET -AddressPrefix 192.168.0.0/16 -Subnet $subnetConfig
+
+# Create a public IP address and specify a DNS name
+$pip = New-AzPublicIpAddress -ResourceGroupName $resourceGroup -Location $location `
+  -Name "mypublicdns$(Get-Random)" -AllocationMethod Static -IdleTimeoutInMinutes 4
+
+# Create an inbound network security group rule for port 3389
+$nsgRuleRDP = New-AzNetworkSecurityRuleConfig -Name myNetworkSecurityGroupRuleRDP  -Protocol Tcp `
+  -Direction Inbound -Priority 1000 -SourceAddressPrefix * -SourcePortRange * -DestinationAddressPrefix * `
+  -DestinationPortRange 3389 -Access Allow
+
+# Create a network security group
+$nsg = New-AzNetworkSecurityGroup -ResourceGroupName $resourceGroup -Location $location `
+  -Name myNetworkSecurityGroup -SecurityRules $nsgRuleRDP
+
+# Create a virtual network card and associate with public IP address and NSG
+$nic = New-AzNetworkInterface -Name myNic -ResourceGroupName $resourceGroup -Location $location `
+  -SubnetId $vnet.Subnets[0].Id -PublicIpAddressId $pip.Id -NetworkSecurityGroupId $nsg.Id
+
+# Create a virtual machine configuration
+$vmConfig = New-AzVMConfig -VMName $vmName -VMSize Standard_D2s_v3 | `
+Set-AzVMOperatingSystem -Windows -ComputerName $vmName -Credential $cred | `
+Set-AzVMSourceImage -PublisherName MicrosoftWindowsServer -Offer WindowsServer -Skus 2016-Datacenter -Version latest | `
+Add-AzVMNetworkInterface -Id $nic.Id
+
+# Create a virtual machine
+New-AzVM -ResourceGroupName $resourceGroup -Location $location -VM $vmConfig
+
+
+ResourceGroupName : myResourceGroup
+Location          : eastus
+ProvisioningState : Succeeded
+Tags              : 
+ResourceId        : /subscriptions/5b0df146-f3db-425e-b4e3-100c365ef724/resourceGroups/myResourceGroup
+
+WARNING: Breaking changes in the cmdlet 'New-AzVirtualNetworkSubnetConfig' :
+WARNING:  - Update Property Name
+
+
+WARNING: Cmdlet invocation changes :
+	Old Way : -ResourceId
+	New Way : -NatGatewayId
+WARNING:  - Update Property Name
+
+
+WARNING: Cmdlet invocation changes :
+	Old Way : -InputObject
+	New Way : -NatGateway
+WARNING: NOTE : Go to https://aka.ms/azps-changewarnings for steps to suppress this breaking change warning, and other information on 
+breaking changes in Azure PowerShell.
+WARNING: Since the VM is created using premium storage or managed disk, existing standard storage account, ravisampletestedresource, i
+s used for boot diagnostics.
+
+RequestId           : 
+IsSuccessStatusCode : True
+StatusCode          : OK
+ReasonPhrase        : OK
+
+
+
+
+PS C:\Windows\system32> Stop-AzVM -name myVM2
+cmdlet Stop-AzVM at command pipeline position 1
+Supply values for the following parameters:
+(Type !? for Help.)
+ResourceGroupName: myResourceGroup
+
+
+OperationId : e7f1cc48-00bc-4ec1-b990-9304fccc4676
+Status      : Succeeded
+StartTime   : 27-11-2019 18:34:12
+EndTime     : 27-11-2019 18:35:38
+Error       : 
+
+
+
+
+PS C:\Windows\system32> 

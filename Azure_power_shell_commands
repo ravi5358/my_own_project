@@ -1,0 +1,188 @@
+PS C:\Users\ravishankar.mosam> Get-Module
+
+ModuleType Version    Name                                ExportedCommands                                                           
+---------- -------    ----                                ----------------                                                           
+Script     1.0.0.0    ISE                                 {Get-IseSnippet, Import-IseSnippet, New-IseSnippet}                        
+Manifest   3.1.0.0    Microsoft.PowerShell.Management     {Add-Computer, Add-Content, Checkpoint-Computer, Clear-Content...}         
+Manifest   3.1.0.0    Microsoft.PowerShell.Utility        {Add-Member, Add-Type, Clear-Variable, Compare-Object...}                  
+
+================================================================================================================================
+Get-Module -ListAvailable
+
+==========================================================================================================================
+
+How to install azure power shell module if not available
+
+
+
+Install-Module -Name Az -AllowClobber -Scope CurrentUser
+
+Install-Module -Name Az -AllowClobber -Scope AllUsers
+
+$PSVersionTable.PSVersion
+
+=============================================================================================================================
+
+How login to azure power shell login to account
+
+PS C:\Users\ravishankar.mosam> Connect-AzAccount
+
+Account                               SubscriptionName TenantId                             Environment
+-------                               ---------------- --------                             -----------
+ravishankar.mosam@sonata-software.com Kishor N M – MPN 7571a489-bd29-4f38-b9a6-7c880f8cddf0 AzureCloud 
+
+===================================================================================================================
+
+How to check resoure groups
+
+Get-AzResourceGroup
+
+=========================================================================
+
+How to check one perticular resource group name in powershell
+
+Get-AzResourceGroup -Name "myraviresourcegroup" 
+
+========================================================================================
+How to check subcription in azure power shell
+
+Get-AzSubscription
+
+================================================================================================
+How to check resource group location and tag
+
+Get-azResourceGroup |
+  Sort Location,ResourceGroupName |
+  Format-Table -GroupBy Location ResourceGroupName,ProvisioningState,Tags
+  
+  
+  (Get-AzResourceGroup -Name myraviresourcegroup )
+  
+(Get-AzResourceGroup -Name myraviresourcegroup ).Tags
+
+  
+=======================================================================================================
+How to check vm in azure
+
+Get-AzVM  
+
+=========================================================================================================
+
+One perticular resource group checking VM
+
+Get-AzVM -ResourceGroupName "SATHISHEXCHANGE-RG"
+
+===========================================================================================================
+How to create resource group
+
+New-AzResourceGroup -Name myraviresourcegroup -Location "East US"
+
+=============================================================================================================
+How to check resoure group is created or not
+
+Get-AzResourceGroup -Name "myraviresourcegroup"
+
+===============================================================================================================
+How to create windows VM in AzureCloud
+
+New-AzVm `
+    -ResourceGroupName "myraviresourcegroup" `
+    -Name "newvm1" `
+    -Location "East US" `
+    -VirtualNetworkName "myVnet" `
+    -SubnetName "mySubnet" `
+    -SecurityGroupName "myNetworkSecurityGroup" `
+    -PublicIpAddressName "myPublicIpAddress" `
+    -OpenPorts 80,3389
+	
+	(OR)
+
+New-AzVm `
+    -ResourceGroupName "myraviresourcegroup" `
+    -Name "myVM2" `
+    -Location "EastUS" `
+    -VirtualNetworkName "myVnet" `
+    -SubnetName "mySubnet" `
+    -SecurityGroupName "myNetworkSecurityGroup" `
+    -PublicIpAddressName "myPublicIpAddress2" `
+    -ImageName "MicrosoftWindowsServer:WindowsServer:2016-Datacenter-with-Containers:latest" `
+    -OpenPorts 80,3389
+
+==================================================================================================================================
+# Variables for common values
+$resourceGroup = "myraviresourcegroup"
+$location = "East US"
+$vmName = "myVM2"
+
+# Create user object
+$cred = Get-Credential -Message "Enter a username and password for the virtual machine."
+
+# Create a resource group
+New-AzResourceGroup -Name $resourceGroup -Location $location
+
+# Create a subnet configuration
+$subnetConfig = New-AzVirtualNetworkSubnetConfig -Name mySubnet -AddressPrefix 192.168.1.0/24
+
+# Create a virtual network
+$vnet = New-AzVirtualNetwork -ResourceGroupName $resourceGroup -Location $location `
+  -Name MYvNET -AddressPrefix 192.168.0.0/16 -Subnet $subnetConfig
+
+# Create a public IP address and specify a DNS name
+$pip = New-AzPublicIpAddress -ResourceGroupName $resourceGroup -Location $location `
+  -Name "mypublicdns$(Get-Random)" -AllocationMethod Static -IdleTimeoutInMinutes 4
+
+# Create an inbound network security group rule for port 3389
+$nsgRuleRDP = New-AzNetworkSecurityRuleConfig -Name myNetworkSecurityGroupRuleRDP  -Protocol Tcp `
+  -Direction Inbound -Priority 1000 -SourceAddressPrefix * -SourcePortRange * -DestinationAddressPrefix * `
+  -DestinationPortRange 3389 -Access Allow
+
+# Create a network security group
+$nsg = New-AzNetworkSecurityGroup -ResourceGroupName $resourceGroup -Location $location `
+  -Name myNetworkSecurityGroup -SecurityRules $nsgRuleRDP
+
+# Create a virtual network card and associate with public IP address and NSG
+$nic = New-AzNetworkInterface -Name myNic -ResourceGroupName $resourceGroup -Location $location `
+  -SubnetId $vnet.Subnets[0].Id -PublicIpAddressId $pip.Id -NetworkSecurityGroupId $nsg.Id
+
+# Create a virtual machine configuration
+$vmConfig = New-AzVMConfig -VMName $vmName -VMSize Standard_D2s_v3 | `
+Set-AzVMOperatingSystem -Windows -ComputerName $vmName -Credential $cred | `
+Set-AzVMSourceImage -PublisherName MicrosoftWindowsServer -Offer WindowsServer -Skus 2016-Datacenter -Version latest | `
+Add-AzVMNetworkInterface -Id $nic.Id
+
+# Create a virtual machine
+New-AzVM -ResourceGroupName $resourceGroup -Location $location -VM $vmConfig
+
+=====================================================================================================================================
+How to check vms in resource group 
+
+Get-AzVM -ResourceGroupName "myraviresourcegroup"
+
+===========================================================================================================================
+How to stop the perticular vm in azure
+
+Stop-AzVM -ResourceGroupName "myraviresourcegroup" -Name "newVm1"
+
+===============================================================================================================================
+start perticular vm in azure
+
+Start-AzVM -ResourceGroupName "myraviresourcegroup" -Name "newVm1"
+
+=====================================================================================================================================
+
+How to remove the perticular vm in azure
+
+Remove-AzVM -ResourceGroupName "myraviresourcegroup" -Name "newVm1"
+
+====================================================================================================================================
+How to set the tag to the resource group
+
+Set-AzResourceGroup -Name myraviresourcegroup -Tag @{ Dept="IT"; Environment="Test" }
+
+(Get-AzResourceGroup -Name myraviresourcegroup ).Tags
+
+
+
+
+
+
