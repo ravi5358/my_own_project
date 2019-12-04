@@ -1,0 +1,40 @@
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  labels:
+    app: apicart-default-monitor
+    k8s-app: apicart-default-monitor
+  name: apicart-default-monitor
+  namespace: monitoring
+spec:
+  endpoints:
+  - honorLabels: true
+    interval: 30s
+    port: tcp-11001-11001-apicart
+    path: "/prometheus"
+  jobLabel: app
+  namespaceSelector:
+    matchNames:
+    - default
+  selector:
+    matchLabels:
+      app: apicart
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: apicart
+  namespace: default
+  labels:
+    app: apicart
+spec:
+  ports:
+  - name: tcp-11001-11001-apicart
+    protocol: TCP
+    port: 11001
+    targetPort: 11001
+  selector:
+    app: apicart
+  type: ClusterIP
+  sessionAffinity: None

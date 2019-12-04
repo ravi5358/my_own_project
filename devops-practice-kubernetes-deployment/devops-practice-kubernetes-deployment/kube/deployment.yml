@@ -1,0 +1,141 @@
+---
+kind: Deployment
+apiVersion: extensions/v1beta1
+metadata:
+  name: apicart
+  namespace: default
+  labels:
+    app: apicart
+  annotations:
+    deployment.kubernetes.io/revision: '1'
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: apicart
+  template:
+    metadata:
+      name: apicart
+      labels:
+        app: apicart
+    spec:
+      containers:
+      - name: apicart
+        image: us.gcr.io/just-slate-88918/apicart:prod-12-2019Jun27T1532CDT-2019.Rel5_HF1
+        env:
+        - name: SPRING_PROFILES_ACTIVE
+          value: PROD
+        - name: eureka_instance_hostname
+          value: apicart
+        - name: API_USER_TIMEZONE
+          value: America/Chicago
+        - name: LOGGING_LEVEL_ROOT
+          value: ERROR
+        - name: LOGGING_LEVEL_COM_ACADEMY
+          value: ERROR       
+        - name: JAVA_OPTS
+          value: -server -Xmx768m -Xmn512m -XX:+UseG1GC -XX:MaxGCPauseMillis=100 -XX:MaxNewSize=384m -Duser.timezone=America/Chicago
+        imagePullPolicy: Always
+        resources:
+          limits:
+            cpu: 1000m
+            memory: 2Gi
+          requests:
+            cpu: 600m
+            memory: 1Gi
+        securityContext:
+          privileged: true
+          capabilities:
+            add:
+              - SYS_ADMIN
+        readinessProbe:
+          failureThreshold: 5
+          initialDelaySeconds: 90
+          periodSeconds: 5
+          successThreshold: 1
+          tcpSocket:
+            port: 11001
+          timeoutSeconds: 1
+        livenessProbe:
+          failureThreshold: 5
+          httpGet:
+            path: /health
+            port: 11001
+            scheme: HTTP
+          initialDelaySeconds: 300
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 2
+      restartPolicy: Always
+      hostAliases:
+      - ip: 10.8.31.205
+        hostnames:
+        - uat5int.academy.com
+      - ip: 10.8.24.204
+        hostnames:
+        - uat4int.academy.com
+      - ip: 10.8.31.206
+        hostnames:
+        - uat6int.academy.com
+      - ip: 10.8.31.207
+        hostnames:
+        - uat7int.academy.com  
+      - ip: 10.8.31.19
+        hostnames:
+        - perfint.academy.com
+      - ip: 10.8.21.203
+        hostnames:
+        - www500.academy.com
+      - ip: 10.8.22.206
+        hostnames:
+        - wcs500.academy.com
+      - ip: 10.8.24.93
+        hostnames:
+        - ulapwcs400e.academy.com
+      - ip: 10.8.24.153
+        hostnames:
+        - ulapwcs500e.academy.com
+      - ip: 10.8.24.25
+        hostnames:
+        - ulapwcs600e.academy.com
+      - ip: 10.8.24.55
+        hostnames:
+        - ulapwcs700e.academy.com
+      - ip: 10.8.24.201
+        hostnames:
+        - ulapwcs800e.academy.com
+      - ip: 10.8.22.159
+        hostnames:
+        - plapwcs500e.academy.com
+      - ip: 10.8.12.56
+        hostnames:
+        - sterlingoms.academy.com
+      - ip: 10.8.11.104
+        hostnames:
+        - usterlingoms.academy.com
+      - ip: 10.8.24.224
+        hostnames:
+        - usterlingoms400.academy.com
+      - ip: 10.8.24.225
+        hostnames:
+        - usterlingoms500.academy.com
+      - ip: 10.8.24.226
+        hostnames:
+        - usterlingoms600.academy.com
+      - ip: 10.8.24.227
+        hostnames:
+        - usterlingoms700.academy.com
+      - ip: 10.8.24.238
+        hostnames:
+        - usterlingoms800.academy.com
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: ClusterFirst
+      securityContext: {}
+      imagePullSecrets:
+      - name: aso-gcr-secret
+      schedulerName: default-scheduler
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
